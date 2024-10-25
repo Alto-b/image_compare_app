@@ -25,6 +25,7 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
   File? _image1;
   File? _image2;
   double? _matchPercentage;
+  bool _isComparing = false;
 
   final picker = ImagePicker();
 
@@ -42,17 +43,25 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
     });
   }
 
-  void compareImages() {
+  void compareImages() async {
     if (_image1 != null && _image2 != null) {
-      double percentage = calculateImageMatchPercentage(_image1!, _image2!);
+      setState(() {
+        _isComparing = true; // Show loading indicator during comparison
+      });
+
+      double percentage = await Future.delayed(
+        Duration(seconds: 1), // Simulate a slight delay for UI smoothness
+        () => calculateImageMatchPercentage(_image1!, _image2!),
+      );
+
       setState(() {
         _matchPercentage = percentage;
+        _isComparing = false; // Hide loading indicator
       });
     }
   }
 
   double calculateImageMatchPercentage(File file1, File file2) {
-    // Decode the images
     final img.Image? image1 = img.decodeImage(file1.readAsBytesSync());
     final img.Image? image2 = img.decodeImage(file2.readAsBytesSync());
 
@@ -60,7 +69,6 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
       throw Exception('Error decoding one or both images');
     }
 
-    // Resize both images to the same dimensions
     final width = image1.width < image2.width ? image1.width : image2.width;
     final height =
         image1.height < image2.height ? image1.height : image2.height;
@@ -70,33 +78,28 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
     final img.Image resizedImage2 =
         img.copyResize(image2, width: width, height: height);
 
-    // Get the raw pixel data as lists of integers
     List<int> pixels1 = resizedImage1.getBytes();
     List<int> pixels2 = resizedImage2.getBytes();
 
     int totalPixels = width * height;
     int matchingPixels = 0;
 
-    // Compare pixel data
     for (int i = 0; i < pixels1.length; i += 4) {
-      // Check if both pixels match (RGBA format)
-      int r1 = pixels1[i]; // Red component of pixel1
-      int g1 = pixels1[i + 1]; // Green component of pixel1
-      int b1 = pixels1[i + 2]; // Blue component of pixel1
-      int a1 = pixels1[i + 3]; // Alpha component of pixel1
+      int r1 = pixels1[i];
+      int g1 = pixels1[i + 1];
+      int b1 = pixels1[i + 2];
+      int a1 = pixels1[i + 3];
 
-      int r2 = pixels2[i]; // Red component of pixel2
-      int g2 = pixels2[i + 1]; // Green component of pixel2
-      int b2 = pixels2[i + 2]; // Blue component of pixel2
-      int a2 = pixels2[i + 3]; // Alpha component of pixel2
+      int r2 = pixels2[i];
+      int g2 = pixels2[i + 1];
+      int b2 = pixels2[i + 2];
+      int a2 = pixels2[i + 3];
 
-      // Compare RGBA values
       if (r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2) {
         matchingPixels++;
       }
     }
 
-    // Calculate the match percentage
     double matchPercentage = (matchingPixels / totalPixels) * 100;
     return matchPercentage;
   }
@@ -105,45 +108,83 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Image Compare App')),
-      body: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          children: [
+            buildImagePicker(1),
+            buildImagePicker(2),
+            SizedBox(height: 20),
+            if (_isComparing)
+              CircularProgressIndicator(), // Show spinner during comparison
+            if (_matchPercentage != null && !_isComparing)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Match Percentage:',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      '${_matchPercentage!.toStringAsFixed(2)}%',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: _matchPercentage! > 70
+                            ? Colors.green
+                            : Colors.red, // Color based on similarity
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (_image1 != null && _image2 != null && !_isComparing)
               ElevatedButton(
-                onPressed: () => pickImage(1),
-                child: Text('Pick First Image'),
+                onPressed: compareImages,
+                child: Text('Compare Images'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                ),
               ),
-              ElevatedButton(
-                onPressed: () => pickImage(2),
-                child: Text('Pick Second Image'),
-              ),
-            ],
-          ),
-          if (_image1 != null && _image2 != null)
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(child: Image.file(_image1!)),
-                  Expanded(child: Image.file(_image2!)),
-                ],
-              ),
-            ),
-          if (_matchPercentage != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Match Percentage: ${_matchPercentage!.toStringAsFixed(2)}%',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          if (_image1 != null && _image2 != null)
-            ElevatedButton(
-              onPressed: compareImages,
-              child: Text('Compare Images'),
-            ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  // Function to build image picker
+  Widget buildImagePicker(int imageNumber) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => pickImage(imageNumber),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Card(
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Container(
+              height: 200,
+              child: Center(
+                child: _getImage(imageNumber),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Function to show image or placeholder
+  Widget _getImage(int imageNumber) {
+    File? imageFile = imageNumber == 1 ? _image1 : _image2;
+    if (imageFile != null) {
+      return Image.file(imageFile, fit: BoxFit.cover, width: double.infinity);
+    } else {
+      return Icon(Icons.image, size: 100, color: Colors.grey);
+    }
   }
 }
