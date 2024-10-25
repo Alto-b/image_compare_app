@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
@@ -115,7 +114,7 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
         backgroundColor: Color.fromARGB(255, 219, 216, 216),
         title: Text(
           'Image Compare App',
-          style: GoogleFonts.orbitron(
+          style: TextStyle(
             color: Colors.black54,
             fontSize: 25,
             fontWeight: FontWeight.w700,
@@ -184,6 +183,9 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
             ),
             child: Container(
               height: 200,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              decoration:
+                  BoxDecoration(borderRadius: BorderRadius.circular(30)),
               child: Center(
                 child: _getImage(imageNumber),
               ),

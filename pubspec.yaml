@@ -31,7 +31,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
-  google_fonts: 
   image: null
   image_picker: null
 
