@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
@@ -11,6 +12,8 @@ class ImageCompareApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(useMaterial3: true),
       home: ImageCompareScreen(),
     );
   }
@@ -50,7 +53,7 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
       });
 
       double percentage = await Future.delayed(
-        Duration(seconds: 1), // Simulate a slight delay for UI smoothness
+        const Duration(seconds: 1), // Simulate a slight delay for UI smoothness
         () => calculateImageMatchPercentage(_image1!, _image2!),
       );
 
@@ -107,26 +110,38 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Image Compare App')),
+      backgroundColor: Color.fromARGB(255, 219, 216, 216),
+      appBar: AppBar(
+        backgroundColor: Color.fromARGB(255, 219, 216, 216),
+        title: Text(
+          'Image Compare App',
+          style: GoogleFonts.orbitron(
+            color: Colors.black54,
+            fontSize: 25,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Column(
           children: [
             buildImagePicker(1),
             buildImagePicker(2),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             if (_isComparing)
-              CircularProgressIndicator(), // Show spinner during comparison
+              const CircularProgressIndicator(), // Show spinner during comparison
             if (_matchPercentage != null && !_isComparing)
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Match Percentage:',
                       style: TextStyle(fontSize: 18),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text(
                       '${_matchPercentage!.toStringAsFixed(2)}%',
                       style: TextStyle(
@@ -143,9 +158,10 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
             if (_image1 != null && _image2 != null && !_isComparing)
               ElevatedButton(
                 onPressed: compareImages,
-                child: Text('Compare Images'),
+                child: const Text('Compare Images'),
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
               ),
           ],
@@ -184,7 +200,7 @@ class _ImageCompareScreenState extends State<ImageCompareScreen> {
     if (imageFile != null) {
       return Image.file(imageFile, fit: BoxFit.cover, width: double.infinity);
     } else {
-      return Icon(Icons.image, size: 100, color: Colors.grey);
+      return const Icon(Icons.image, size: 100, color: Colors.grey);
     }
   }
 }
